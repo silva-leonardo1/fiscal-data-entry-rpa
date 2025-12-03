@@ -7,6 +7,14 @@ O objetivo é eliminar tarefas manuais repetitivas, reduzir erros e acelerar o l
 
 ---
 
+## 🎥 Demonstração (GIF)
+
+Abaixo você pode ver uma demonstração do robô em funcionamento:
+
+![Image](https://github.com/user-attachments/assets/6f4bf6dd-6269-4e86-a5a2-9b085a13dd09)
+
+---
+
 ## ⚙️ O Problema
 O lançamento manual de processos fiscais exige:
 
