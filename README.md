@@ -109,7 +109,7 @@ dados_para_colar = [...]
 ## 4. Executar o Robô
 
 ```bash
-python automacao_fiscal.py
+python auto.py
 ```
 
 ⚠️ Durante a execução:
