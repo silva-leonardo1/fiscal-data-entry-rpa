@@ -64,57 +64,7 @@ Y_OFFSET = ...
 COLUNAS_X = {...}
 ```
 
-Basta copiar esse bloco e colar dentro do seu `automacao_fiscal.py`.
-
-### Código do Calibrador (usado no projeto)
-```python
-import pyautogui
-import time
-import keyboard
-
-GATILHO_TECLA = 'f8'
-DELAY_POS_CAPTURA = 0.5
-
-def get_position(prompt):
-    print(f"\n{prompt}")
-    print(f"Posicione o mouse e pressione '{GATILHO_TECLA}'")
-    keyboard.wait(GATILHO_TECLA)
-    pos = pyautogui.position()
-    print(f"Posição capturada: {pos}")
-    time.sleep(DELAY_POS_CAPTURA) 
-    return pos
-
-print("--- Calibrador de Mapa de Colunas ---")
-pos1 = get_position("Posicione na PRIMEIRA CÉLULA da automação.")
-pos2 = get_position("Agora na SEGUNDA LINHA da MESMA COLUNA.")
-
-START_Y = pos1.y
-Y_OFFSET = pos2.y - pos1.y
-
-colunas_x = {}
-
-req_pos = get_position("Posicione na coluna 'REQUERIMENTO'")
-colunas_x['requerimento'] = req_pos.x
-
-end_pos = get_position("Posicione na coluna 'ENDEREÇO'")
-colunas_x['endereco'] = end_pos.x
-
-while True:
-    keyword = input("Digite a palavra-chave da coluna ou 'q' para sair: ").lower().strip()
-    if keyword == 'q': break
-    if not keyword: continue
-    pos = get_position(f"Posicione na coluna '{keyword}'")
-    colunas_x[keyword] = pos.x
-
-print("\n--- CALIBRAÇÃO CONCLUÍDA! ---")
-print("# --- INÍCIO DA CONFIGURAÇÃO ---")
-print(f"START_Y = {START_Y}")
-print(f"Y_OFFSET = {Y_OFFSET}")
-print(f"COLUNAS_X = {colunas_x}")
-print("# --- FIM DA CONFIGURAÇÃO ---")
-```
-
----
+Basta copiar esse bloco e colar dentro do seu `auto.py`.
 
 ## 🚀 Como Usar a Automação
 
