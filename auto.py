@@ -1,98 +1,146 @@
 import pyautogui
 import pyperclip
 import time
-import re
+import keyboard
 
-# Dados transcritos
-dados_para_colar = [
-    "1234/56 - Rua Abcd, 123 (geral)",
-    "5555/44 - Rua Efg Hijk, 321 (geral)",
-    "Dado/0123/25 - Endereco Qualquer, 333 (obra)",
-    # Adicione quantos dados quiser
+pyautogui.FAILSAFE = True
+pyautogui.PAUSE = 0.05
+
+# --- DATA ---
+data_to_paste = [
+    "REQ/001/24 - 123 Fake St, Springfield (general)",
+    "REQ/002/24 - 456 Evergreen Terrace (general)",
+    "104207/26 - 789 Elm St, Apt 2 (construction)",
+    "JUS/157.25 - 101 Maple Ave (general)",
+    "003216/26 - 555 Oak Blvd, Suite 10 (infraction)",
+    "003214/26 - 777 Pine Rd (infraction)",
+    "JUS/00870.26 - 888 Cedar Ln (general)",
+    "JUS/00959.26 - 999 Birch Ct (permit)",
+    "M/006706/26 - [99123] 111 Walnut Dr (permit)",
+    "M/006680/26 - [88456] 222 Cherry Way (general)"
 ]
 
-# Cole aqui os valores gerados pelo script 'get_coords_full_map.py'
-START_Y = 201
-Y_OFFSET = 15
-COLUNAS_X = {'requerimento': 91, 'endereco': 328, 'alvara': 456, 'passeio': 484, 'aparato': 515, 'terreno': 546, 'obra': 571, 'embargo': 592, 'interdicao': 656, 'interdicao atividade': 654, 'remocao': 690, 'apreensao': 725, 'ai': 766, 'geral': 803}
+# --- CONFIG ---
+WAIT_TIME = 5
+ACTION_DELAY = 0.1
 
-# --- Configurações de Tempo ---
-TEMPO_ESPERA_FOCO = 5
-TEMPO_ESPERA_ACAO = 0.3 # Tempo entre cliques e teclas
-DURACAO_MOVER = 0.1     # Velocidade do mouse
+# --- COLUMNS (1-based) ---
+COLUMNS = {
+    'request': 3,
+    'number': 4,
+    'address': 6,
+    'permit': 7,
+    'sidewalk': 8,
+    'apparatus': 9,
+    'land': 10,
+    'construction': 11,
+    'embargo': 12,
+    'interdiction': 13,
+    'activity interdiction': 14,
+    'removal': 15,
+    'seizure': 16,
+    'infraction': 17,
+    'general': 18
+}
 
-# Padrão de Regex para extrair os 3 pedaços de informação
-# Formato: "REQ" - "ENDERECO" ("TIPO")
-# ^(.*?)\s*-\s*(.*?)\s*\((.*?)\)$
-# Grupo 1: Requerimento
-# Grupo 2: Endereço
-# Grupo 3: Tipo de Vistoria
-regex_pattern = re.compile(r"^(.*?)\s*-\s*(.*?)\s*\((.*?)\)$")
+# --- PARSER ---
+def parse_line(item):
+    try:
+        item = item.strip()
 
-print(f"A automação começará em {TEMPO_ESPERA_FOCO} segundos.")
-print("Por favor, clique na janela da sua planilha.")
-print("Não mexa o mouse ou teclado.")
-time.sleep(TEMPO_ESPERA_FOCO)
+        # grab the type from the parentheses at the end
+        type_start = item.rfind("(")
+        type_end = item.rfind(")")
 
-# Loop Principal
-current_y = START_Y
+        if type_start == -1 or type_end == -1:
+            return None
 
-for i, item_completo in enumerate(dados_para_colar):
-    
-    match = regex_pattern.match(item_completo)
-    
-    if not match:
-        print(f"AVISO: O item '{item_completo}' está fora do formato esperado. Pulando.")
+        item_type = item[type_start + 1:type_end].strip().lower()
+        remainder = item[:type_start].strip()
+
+        if " - " not in remainder:
+            return None
+
+        req_id, remainder = remainder.split(" - ", 1)
+        number = None
+
+        # check if there's a [number] tag
+        if remainder.startswith("["):
+            close_bracket = remainder.find("]")
+            if close_bracket != -1:
+                number = remainder[1:close_bracket].strip()
+                remainder = remainder[close_bracket + 1:].strip()
+
+        address = remainder.strip()
+
+        return req_id, number, address, item_type
+
+    except Exception as e:
+        print("Error parsing:", e)
+        return None
+
+# --- HELPER FUNCS ---
+def go_to_column(current_col, target_col):
+    for _ in range(target_col - current_col):
+        pyautogui.press('tab')
+    return target_col
+
+def paste_text(text):
+    pyperclip.copy(text)
+    pyautogui.hotkey('ctrl', 'v')
+
+# --- MAIN SCRIPT ---
+print(f"Starting in {WAIT_TIME}s...")
+print("Leave your cursor on COLUMN 1 of the first row!")
+time.sleep(WAIT_TIME)
+
+for i, item in enumerate(data_to_paste):
+
+    # kill switch
+    if keyboard.is_pressed('esc'):
+        print("Stopped by user.")
+        break
+
+    print(f"Processing {i+1}/{len(data_to_paste)}")
+
+    parsed = parse_line(item)
+
+    if not parsed:
+        print(f"[ERROR] invalid format: {item}")
         continue
-        
-    requerimento, endereco, tipo_vistoria = match.groups()
-    
-    # Limpa a palavra-chave
-    tipo_vistoria_limpo = tipo_vistoria.strip().lower()
-    
-    # Define o Y atual para esta linha
-    current_y = START_Y + (i * Y_OFFSET)
-    
-    
-    # Cola o requerimento
-    try:
-        x_req = COLUNAS_X['requerimento']
-        pyautogui.moveTo(x_req, current_y, duration=DURACAO_MOVER)
-        pyautogui.doubleClick()
-        time.sleep(TEMPO_ESPERA_ACAO)
-        pyperclip.copy(requerimento.strip())
-        pyautogui.hotkey('ctrl', 'v')
-        
-    except KeyError:
-        print("AVISO: Chave 'requerimento' não encontrada no mapa de colunas.")
-        
-        
-    # Cola o endereço
-    try:
-        x_end = COLUNAS_X['endereco']
-        pyautogui.moveTo(x_end, current_y, duration=DURACAO_MOVER)
-        pyautogui.doubleClick()
-        time.sleep(TEMPO_ESPERA_ACAO)
-        pyperclip.copy(endereco.strip())
-        pyautogui.hotkey('ctrl', 'v')
-        
-    except KeyError:
-        print("AVISO: Chave 'endereco' não encontrada no mapa de colunas.")
 
-        
-    # Marca X na coluna
-    if tipo_vistoria_limpo in COLUNAS_X:
-        x_vistoria = COLUNAS_X[tipo_vistoria_limpo]
-        pyautogui.moveTo(x_vistoria, current_y, duration=DURACAO_MOVER)
-        pyautogui.doubleClick()
-        time.sleep(TEMPO_ESPERA_ACAO)
-        pyautogui.write("X") 
-        
+    req_id, number, address, item_type = parsed
+
+    current_col = 1
+
+    # REQUEST
+    current_col = go_to_column(current_col, COLUMNS['request'])
+    paste_text(req_id)
+
+    # NUMBER
+    current_col = go_to_column(current_col, COLUMNS['number'])
+    if number:
+        paste_text(number)
+
+    # ADDRESS
+    current_col = go_to_column(current_col, COLUMNS['address'])
+    paste_text(address)
+
+    # TYPE
+    item_type = item_type.lower()
+
+    if item_type in COLUMNS:
+        current_col = go_to_column(current_col, COLUMNS[item_type])
+        pyautogui.write("X")
     else:
-        print(f"AVISO: Não foi encontrada uma coluna mapeada para a chave '{tipo_vistoria_limpo}' na linha {i+1}.")
+        print(f"[WARN] unknown type: {item_type}")
 
-    # Pressiona Enter para confirmar a linha
+    # move to the next row
+    pyautogui.press('home')
     pyautogui.press('enter')
-    time.sleep(TEMPO_ESPERA_ACAO / 2) # Pequena pausa
+    pyautogui.press('enter')
 
-print("Automação concluída!")
+    time.sleep(ACTION_DELAY)
+
+print("All done.")
+input("Press ENTER to exit...")
