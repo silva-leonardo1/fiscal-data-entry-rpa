@@ -23,7 +23,7 @@ pip install pyautogui pyperclip keyboard
 2. Open your spreadsheet or target application.
 3. Run the script:
    ```bash
-   python automator.py
+   python auto.py
    ```
 4. You have 5 seconds (configurable via `WAIT_TIME`) to click on **COLUMN 1** of the first row where the data should be inserted.
 5. Let go of the mouse and keyboard, and watch it work.
